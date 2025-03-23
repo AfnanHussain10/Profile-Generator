@@ -58,13 +58,6 @@ const ProjectCard = forwardRef(
               </a>
             )}
             
-            <a
-              href="#demo"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-            >
-              <ExternalLink size={16} />
-              <span>Live Demo</span>
-            </a>
           </div>
         </div>
       </div>

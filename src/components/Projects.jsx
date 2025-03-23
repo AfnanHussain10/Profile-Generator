@@ -8,13 +8,10 @@ const Projects = () => {
   const { portfolioData, reorderProjects } = usePortfolio();
   const [projects, setProjects] = useState([]);
   const [draggingId, setDraggingId] = useState(null);
-  
-  // Use React Query to fetch portfolio data
+
   const { isLoading, error } = useQuery({
     queryKey: ['portfolioProjects'],
     queryFn: async () => {
-      // In a real app, you would fetch from a real API
-      // Here we're simulating with the context data
       
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
