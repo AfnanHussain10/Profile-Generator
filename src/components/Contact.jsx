@@ -1,61 +1,154 @@
-
 import { useState, useEffect } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { toast } from 'sonner';
-import { Send } from 'lucide-react';
+import { submitToGoogleForm } from '@/lib/api';
+import { Send, Mail, Users } from 'lucide-react';
 
-const Contact = () => {
-  const { portfolioData } = usePortfolio();
+// Create a custom hook for form logic to separate concerns
+const useContactForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [formState, setFormState] = useState({
+    isSubmitting: false,
+    isSuccess: false,
+    errors: {
+      name: '',
+      email: '',
+      message: '',
+    },
+  });
 
-  useEffect(() => {
-    if (isSuccess) {
-      const timer = setTimeout(() => {
-        setIsSuccess(false);
-      }, 5000);
-      
-      return () => clearTimeout(timer);
+  const validateForm = () => {
+    let isValid = true;
+    const errors = {
+      name: '',
+      email: '',
+      message: '',
+    };
+
+    // Validate name
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+      isValid = false;
     }
-  }, [isSuccess]);
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Validate message
+    if (!formData.message.trim()) {
+      errors.message = 'Message is required';
+      isValid = false;
+    }
+
+    setFormState(prev => ({ ...prev, errors }));
+    return isValid;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user types
+    if (formState.errors[name]) {
+      setFormState(prev => ({
+        ...prev,
+        errors: {
+          ...prev.errors,
+          [name]: '',
+        },
+      }));
+    }
   };
 
+  const resetForm = () => {
+    setFormData({ name: '', email: '', message: '' });
+    setFormState(prev => ({
+      ...prev,
+      errors: { name: '', email: '', message: '' },
+    }));
+  };
+
+  return {
+    formData,
+    formState,
+    setFormState,
+    handleChange,
+    validateForm,
+    resetForm,
+  };
+};
+
+const Contact = () => {
+  const { portfolioData } = usePortfolio();
+  const {
+    formData,
+    formState,
+    setFormState,
+    handleChange,
+    validateForm,
+    resetForm,
+  } = useContactForm();
+
+  // Reset success message after delay
+  useEffect(() => {
+    if (formState.isSuccess) {
+      const timer = setTimeout(() => {
+        setFormState(prev => ({ ...prev, isSuccess: false }));
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [formState.isSuccess, setFormState]);
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
+    setFormState(prev => ({ ...prev, isSubmitting: true }));
+    
     try {
-      setIsSubmitting(true);
+      const { success, error } = await submitToGoogleForm(formData);
       
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!success) {
+        throw new Error(error || 'Failed to submit form');
+      }
       
-      console.log('Form submitted:', formData);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        message: '',
-      });
-      
-      setIsSuccess(true);
+      // Reset form and show success message
+      resetForm();
+      setFormState(prev => ({ 
+        ...prev, 
+        isSuccess: true,
+        isSubmitting: false 
+      }));
       toast.success('Message sent successfully!');
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (err) {
+      console.error(err);
       toast.error('Failed to send message. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setFormState(prev => ({ ...prev, isSubmitting: false }));
     }
   };
+
+  // Extract availability text
+  const availabilityText = portfolioData.name 
+    ? 'I am currently available for freelance work or full-time positions.'
+    : 'I am currently accepting new opportunities.';
 
   return (
     <section id="contact" className="py-20 px-4 md:px-6">
@@ -70,37 +163,57 @@ const Contact = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="animate-fade-in-up">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" id="contactForm" aria-label="Contact form">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium mb-1">
                   Name
                 </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 rounded-md border border-input bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  placeholder="Your name"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    aria-required="true"
+                    aria-invalid={!!formState.errors.name}
+                    aria-describedby={formState.errors.name ? "name-error" : undefined}
+                    className={`w-full pl-10 pr-4 py-2 rounded-md border bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
+                      formState.errors.name ? 'border-red-500 focus:ring-red-500/50' : 'border-input'
+                    }`}
+                    placeholder="Your name"
+                  />
+                  <Users size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                </div>
+                {formState.errors.name && (
+                  <p id="name-error" className="text-red-500 text-xs mt-1">{formState.errors.name}</p>
+                )}
               </div>
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1">
                   Email
                 </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 rounded-md border border-input bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  placeholder="Your email"
-                />
+                <div className="relative">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    aria-required="true"
+                    aria-invalid={!!formState.errors.email}
+                    aria-describedby={formState.errors.email ? "email-error" : undefined}
+                    className={`w-full pl-10 pr-4 py-2 rounded-md border bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
+                      formState.errors.email ? 'border-red-500 focus:ring-red-500/50' : 'border-input'
+                    }`}
+                    placeholder="Your email"
+                  />
+                  <Mail size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                </div>
+                {formState.errors.email && (
+                  <p id="email-error" className="text-red-500 text-xs mt-1">{formState.errors.email}</p>
+                )}
               </div>
               
               <div>
@@ -112,23 +225,30 @@ const Contact = () => {
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
-                  required
+                  aria-required="true"
+                  aria-invalid={!!formState.errors.message}
+                  aria-describedby={formState.errors.message ? "message-error" : undefined}
                   rows={5}
-                  className="w-full px-4 py-2 rounded-md border border-input bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+                  className={`w-full px-4 py-2 rounded-md border bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none ${
+                    formState.errors.message ? 'border-red-500 focus:ring-red-500/50' : 'border-input'
+                  }`}
                   placeholder="Your message"
                 />
+                {formState.errors.message && (
+                  <p id="message-error" className="text-red-500 text-xs mt-1">{formState.errors.message}</p>
+                )}
               </div>
               
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={formState.isSubmitting}
                 className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-md bg-primary text-primary-foreground font-medium transition-all ${
-                  isSubmitting 
+                  formState.isSubmitting 
                     ? 'opacity-70 cursor-not-allowed' 
-                    : 'hover:bg-primary/90'
+                    : 'hover:bg-primary/90 focus:ring-2 focus:ring-primary/50 focus:ring-offset-2'
                 }`}
               >
-                {isSubmitting ? (
+                {formState.isSubmitting ? (
                   <>
                     <div className="h-4 w-4 border-2 border-primary-foreground border-r-transparent rounded-full animate-spin"></div>
                     <span>Sending...</span>
@@ -141,8 +261,8 @@ const Contact = () => {
                 )}
               </button>
               
-              {isSuccess && (
-                <div className="p-3 rounded-md bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm animate-fade-in">
+              {formState.isSuccess && (
+                <div role="alert" className="p-3 rounded-md bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm animate-fade-in">
                   Thank you for your message! I'll get back to you soon.
                 </div>
               )}
@@ -157,31 +277,40 @@ const Contact = () => {
                 {portfolioData.contactEmail && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Email</h4>
-                    <p className="text-foreground">{portfolioData.contactEmail}</p>
+                    <a 
+                      href={`mailto:${portfolioData.contactEmail}`} 
+                      className="text-foreground hover:text-primary transition-colors"
+                    >
+                      {portfolioData.contactEmail}
+                    </a>
                   </div>
                 )}
                 
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Connect with me</h4>
                   <div className="flex flex-wrap gap-3 mt-2">
-                    {portfolioData.socialMedia.map((social) => (
-                      <a
-                        key={social.id}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-md bg-secondary text-foreground/90 text-sm hover:bg-secondary/80 transition-colors"
-                      >
-                        {social.name}
-                      </a>
-                    ))}
+                    {portfolioData.socialMedia?.length > 0 ? (
+                      portfolioData.socialMedia.map((social) => (
+                        <a
+                          key={social.id}
+                          href={social.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Visit my ${social.name} profile`}
+                          className="px-3 py-1.5 rounded-md bg-secondary text-foreground/90 text-sm hover:bg-secondary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                          {social.name}
+                        </a>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-sm">Social media links coming soon</p>
+                    )}
                   </div>
                 </div>
                 
                 <div className="pt-4">
                   <p className="text-muted-foreground text-sm">
-                    I am currently {portfolioData.name ? 'available' : ''} for freelance work or full-time positions. 
-                    Let's create something amazing together!
+                    {availabilityText} Let's create something amazing together!
                   </p>
                 </div>
               </div>
