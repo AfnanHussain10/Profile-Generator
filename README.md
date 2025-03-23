@@ -1,69 +1,64 @@
-# Welcome to your Lovable project
+# Portfolio Generator
 
-## Project info
+A responsive web application that allows users to create their own professional portfolio website by simply entering their information.
 
-**URL**: https://lovable.dev/projects/18e0cdce-5b59-431e-95cf-517d48f73813
+## Features
 
-## How can I edit this code?
+- **Easy Portfolio Creation**: Fill in your personal information, skills, and projects to generate a professional portfolio website
+- **Live Preview**: See your portfolio updates in real-time
+- **Dark/Light Mode**: Toggle between different themes
+- **Responsive Design**: Works perfectly on mobile, tablet, and desktop devices
+- **Project Showcase**: Display your projects with descriptions and links
+- **Contact Form**: Allow visitors to get in touch with you
+- **Social Media Integration**: Connect all your social profiles
 
-There are several ways of editing your application.
+## Technologies Used
 
-**Use Lovable**
+- React
+- JavaScript
+- Tailwind CSS
+- shadcn/ui components
+- React Router
+- React Query
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/18e0cdce-5b59-431e-95cf-517d48f73813) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Follow these steps to run the project locally:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- `/src/components` - UI components
+- `/src/pages` - Main application pages
+- `/src/context` - React context providers
+- `/src/lib` - Utility functions and API integration
+- `/src/hooks` - Custom React hooks
 
-**Use GitHub Codespaces**
+## How It Works
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Enter your personal information in the data entry form
+2. Preview your portfolio in real-time
+3. Make adjustments as needed
+4. Deploy your portfolio to share with the world
 
-## What technologies are used for this project?
+## Contact Form Integration
 
-This project is built with .
+The contact form is set up to work with Google Forms. To make it functional:
+1. Create a Google Form with fields for name, email, and message
+2. Get your form ID from the form URL
+3. Update the form ID in the API configuration
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contributing
 
-## How can I deploy this project?
+Contributions, issues, and feature requests are welcome!
 
-Simply open [Lovable](https://lovable.dev/projects/18e0cdce-5b59-431e-95cf-517d48f73813) and click on Share -> Publish.
+## License
 
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+This project is available as open source under the terms of the MIT license.
