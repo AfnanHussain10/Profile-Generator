@@ -39,7 +39,6 @@ export const fetchGitHubProjects = async (username) => {
     
     const data = await response.json();
     
-    // Transform GitHub API response to match our Project type
     const projects = data.map((repo) => ({
       id: repo.id.toString(),
       title: repo.name,
@@ -58,7 +57,7 @@ export const fetchGitHubProjects = async (username) => {
 // Add the fetchPortfolioData function
 export const fetchPortfolioData = async () => {
   try {
-    // Replace with the actual API endpoint or data source
+
     const response = await fetch('/api/portfolio-data');
     
     if (!response.ok) {
